@@ -6,7 +6,8 @@ from shutil import copyfile
 
 def main(args):
     input_dir = args.dir
-    output_dir = input_dir + "-clean"
+    p = re.compile('-source')
+    output_dir = re.sub(p, '', input_dir)
     make_dir(output_dir)
     files = os.listdir(input_dir)
     transfer(files, input_dir, output_dir)

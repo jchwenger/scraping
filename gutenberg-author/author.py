@@ -1,7 +1,6 @@
 import os
 import re
 import re
-import json
 import random
 import pprint
 import urllib3
@@ -34,6 +33,10 @@ def main(args):
         save_ebook(title, link, author_dir, i, total, delay, http)
         i += 1
 
+    # if no download, remove dir
+    if len(os.listdir(author_dir) == 0: 
+           os.removedirs(author_dir)
+
 def get_links(auth_re, soup, lang):
     # find section
     h2 = soup.find_all(string=auth_re)
@@ -60,7 +63,7 @@ def save_ebook(title, link, author_dir, i, total, delay, http):
     riddance = re.compile('[!?.()"";:,\']')
     t = re.sub(riddance, '', title.lower()).replace(' ', '-') + '.txt'
     if not os.path.isfile(os.path.join(author_dir, t)):
-        ebook = get_ebook(link, http, secs=delay)
+        ebook = get_ebook(link, http, delay=delay)
         l = len(str(total))
         print(f'{i:{l}}/{total}, saving: {t}')
         with open(os.path.join(author_dir, t), 'wb') as f:
@@ -68,7 +71,7 @@ def save_ebook(title, link, author_dir, i, total, delay, http):
     else:
         print(f'{i:4}/{total}, already downloaded {t}, continuing')    
 
-def get_ebook(link, http, secs=1):
+def get_ebook(link, http, delay=1):
     G = 'http://www.gutenberg.org'
     # go to list of formats
 #     http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
@@ -77,13 +80,13 @@ def get_ebook(link, http, secs=1):
     # find utf-8 plain text version
     txt = re.compile('plain text', re.IGNORECASE)
     l = s(string=txt)[0].parent['href'] # link
-    sleep(secs) # get thee not blocked
+    sleep(delay) # get thee not blocked
     # download ebook & return it
     h = http.request('Get', G+l)
     return(h.data)
 
 def make_dir(author):
-    author_dir = '-'.join(map(str.lower, author.split(', ')))
+    author_dir = '-'.join(map(str.lower, author.split(', '))) + '-source'
     if not os.path.isdir(author_dir):
         print(f'creating new directory {author_dir}')
         os.mkdir(author_dir)
