@@ -15,7 +15,7 @@ def main():
     # make result dir
     output_dirs = make_dir()
 
-    # process_txt_files(source_dir, output_dirs['txt'], files_txt)
+    process_txt_files(source_dir, output_dirs['txt'], files_txt)
     process_html_files(source_dir, output_dirs['html'], files_html)
 
     # if no result, remove dir
@@ -28,10 +28,7 @@ def main():
 def process_txt_files(source_dir, output_dir, files_txt):
     total = len(files_txt)
     l = len(str(total))
-    err = re.escape("***************** Erreur dans l'interprétation du texte (ligne ")
-    err += "[0-9]+"
-    err += re.escape(", programme : edition_txt.php)")
-    err_re = re.compile(err)
+    err_re = php_error_regex()
     for i, fname in enumerate(files_txt):
         if os.path.isfile(os.path.join(output_dir, fname)):
             print(f"{i+1:{l}}/{total}: already processed {fname}")
@@ -73,6 +70,7 @@ def process_html_files(source_dir, output_dir, files_html):
     require_nl = {"datedoc", "soustitre", "casting", "imprimeur"}
     init_space = re.compile('^\s+')
     space_riddance = re.compile('(^\s+|\s\s+)')
+    err_re = php_error_regex()
 
     for i, fname in enumerate(files_html):
         out_fname = f"{os.path.splitext(fname)[0]}.txt"
@@ -108,9 +106,23 @@ def process_html_files(source_dir, output_dir, files_html):
                                     a = re.sub(space_riddance, ' ', a)
                                     purged.append(a)
                                     continue
+                            # remove php error
+                            if re.search(err_re, a):
+                                a = re.sub(err_re, '', a)
                             purged.append(a)
                 with open(os.path.join(output_dir, out_fname), "w") as o:
                     o.write("\n".join(purged))
+
+
+def php_error_regex():
+    err = "\** +"
+    err += re.escape("Erreur dans l'interprétation du texte (ligne ")
+    err += "[0-9]+"
+    err += re.escape(", programme : edition")
+    err += "(_txt)*"
+    err += re.escape(".php)")
+    err_re = re.compile(err)
+    return err_re
 
 
 def make_dir():
