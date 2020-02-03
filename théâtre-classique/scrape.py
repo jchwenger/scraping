@@ -27,7 +27,7 @@ def main(args):
     soup = soup('tbody')[0]  # reduce search only to the data table
     rows = soup(string=re.compile('^HTML$'))  # find element containing html link
     for r in rows:
-        author, info = get_links(r)
+        author, info = get_links(r, try_for_txt=args.try_for_txt)
         links[author].append(info)
     # pp.pprint(links)
 
@@ -48,20 +48,21 @@ def main(args):
         os.removedirs(source_dir)
 
 
-def get_links(row):
-    txt_re = re.compile('^TXT$')
+def get_links(row, try_for_txt=True):
     el = row.parent.parent  # local <td> with link
     parent = el.parent  # main <td> with all categories
     author = parent.find_all(attrs={'href': '../bio/auteurs.htm#'})[0]
     title = author.parent.next_sibling.next_sibling
-    result = parent(string=txt_re)  # search for txt category
-    # if no txt available, return html
-    if len(result) == 0:
-        result = el
-        nature = 'xml'
-    else:  # otherwise return txt el
-        result = result[0].parent.parent
-        nature = 'txt'
+    # preemptively store html version
+    result = el
+    nature = 'xml'
+    if try_for_txt:
+        txt_re = re.compile('^TXT$')
+        result = parent(string=txt_re)  # search for txt category
+        # if no txt available, return html
+        if len(result) != 0: # if found, return txt el
+            result = result[0].parent.parent
+            nature = 'txt'
     link = result.a['href']
     return author.text, {'title': title.text, 'link': link, 'nature': nature}
 
@@ -100,7 +101,7 @@ def total_ebooks(links):
 
 
 def make_dir():
-    source_dir = 'théatre-classique-source'
+    source_dir = 'théâtre-classique-source'
     if not os.path.isdir(source_dir):
         print(f'creating new directory {source_dir}')
         os.mkdir(source_dir)
@@ -110,10 +111,12 @@ def make_dir():
 
 
 if __name__ == '__main__':
+
     parser = argparse.ArgumentParser(
         description="""Downloading all books by one author from Théâtre Classique:
         http://www.theatre-classique.fr"""
     )
+
     parser.add_argument(
         '-d',
         '--delay',
@@ -121,5 +124,14 @@ if __name__ == '__main__':
         default=1,
         help='The delay to wait between each download, default: 1 second',
     )
+
+    parser.add_argument(
+        '-t',
+        '--try_for_txt',
+        type=bool,
+        default=False,
+        help='Attempt to download the txt version if available, default: False',
+    )
+
     args = parser.parse_args()
     main(args)
