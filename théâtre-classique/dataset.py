@@ -14,7 +14,7 @@ def main(args):
         out_f = os.path.splitext(f)[0] + ".txt"
         if not os.path.isfile(os.path.join(args.out_dir, out_f)):
             print(f"{i:4}/{total} | processing {f}")
-            datasetize(f, out_f, args.dir, args.out_dir, regices)
+            datasetize(f, out_f, args.dir, args.out_dir, regices, args)
         else:
             print(f"{i:4}/{total} | already processed {f}, passing")
     clean_dir(args.out_dir)
@@ -93,7 +93,7 @@ def make_regices():
     }
 
 
-def datasetize(fname, out_fname, in_dir, out_dir, regices):
+def datasetize(fname, out_fname, in_dir, out_dir, regices, args):
 
     with open(os.path.join(in_dir, fname), "r") as f:
         soup = BeautifulSoup(f.read(), "html.parser")
@@ -106,7 +106,7 @@ def datasetize(fname, out_fname, in_dir, out_dir, regices):
             if a.parent.name not in regices["blacklist"]:
                 # the end
                 if a.parent("a", attrs={"name": "fin"}):
-                    purged.append("<|finderéplique|>")
+                    purged.append(args.end)
                     break
                 # no blank lines
                 if not regex.match(regices["blank_line"], a):
@@ -128,9 +128,9 @@ def datasetize(fname, out_fname, in_dir, out_dir, regices):
                                 incipit = True
                                 check_dedictaion = False
                             else:
-                                purged.append("<|finderéplique|>")
+                                purged.append(args.end)
+                            purged.append(args.start)
                             purged.append(a)
-                            purged.append("<|débutderéplique|>")
                             continue
                     # annoying untagged dedications
                     if check_dedication and regex.match(regices["cace_dédi"], a):
@@ -148,7 +148,7 @@ def datasetize(fname, out_fname, in_dir, out_dir, regices):
         # some texts are only a monologue, make sure they have an initial tag
         # incipit was never set to True in loop
         if not incipit:
-            purged = ["<|débutderéplique|>"] + purged
+            purged = [args.start] + purged
 
         # remove empty docs (only ["<|débutderéplique|>", # "<|finderéplique|>"])
         if len(purged) <= 2:
@@ -196,6 +196,22 @@ if __name__ == "__main__":
         default="théâtre-classique-dataset",
         help="""The directory containing the .txt files, defaults to
         théâtre-classique-clean""",
+    )
+
+    parser.add_argument(
+        "-s",
+        "--start",
+        type=str,
+        default="<|s|>",
+        help="The start of speech delimiter. Default: <|s|>",
+    )
+
+    parser.add_argument(
+        "-e",
+        "--end",
+        type=str,
+        default="<|e|>",
+        help="The end of speech delimiter. Default: <|e|>",
     )
 
     args = parser.parse_args()
