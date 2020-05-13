@@ -7,6 +7,20 @@ import numpy as np
 
 
 def main(args):
+    print()
+    print("Downloading files from http://opus.nlpl.eu/")
+    underprint("options:")
+    print(f"- language '{args.language}'")
+    print(f"- downloading into {args.download_dir}/")
+    if args.no_gunzip:
+        print("- not gunzipping after downloading")
+    else:
+        print("- gunzipping after downloading")
+    if not args.no_remove_gz and args.no_gunzip:
+        print("- not removing archives after gunzipping")
+    elif not args.no_gunzip:
+        print("- removing archives after gunzipping")
+
     og = opustools.opus_get.OpusGet(
         source=args.language,
         preprocess="mono",
@@ -33,25 +47,33 @@ def main(args):
     ordered_indz = np.argsort(np.array(sizes))
     ordered_no_tok = np.array(no_tok)[ordered_indz]
     total_size = og.format_size(total_size)
-    underprint(f"Available resources for language {args.language}")
-    og.print_files(ordered_no_tok[:3], file_n, total_size)
+
+    underprint(f"Downloading resources for language '{args.language}'")
+    og.print_files(ordered_no_tok, file_n, total_size)
     if not args.list:
-        og.download(ordered_no_tok[:3], file_n, total_size)
+        og.download(ordered_no_tok, file_n, total_size)
 
     # gunzipping: https://stackoverflow.com/a/41270260
-
-    underprint(f"Gunzipping files in {args.download_dir}")
     if not args.no_gunzip:
-        fnames = [f for f in os.listdir(args.download_dir)]
+        underprint(f"Gunzipping files in {args.download_dir}/")
+        fnames = [f for f in os.listdir(args.download_dir) if '.gz' in f]
         for fname in fnames:
             path_in = os.path.join(args.download_dir, fname)
             with gzip.GzipFile(path_in, "rb") as i:
                 path_out = os.path.join(
                     args.download_dir, os.path.splitext(fname)[0]
                 )
-                print(f"- {path_in} -> {path_out}")
+                print(f"   gunzipping {path_out}")
                 with open(path_out, "wb") as o:
                     shutil.copyfileobj(i, o)
+            if not args.no_remove_gz:
+                print(f"   (removing '{path_in}')")
+                os.remove(path_in)
+    if not args.no_gunzip and not args.no_remove_gz:
+        print()
+        print("Done. Removed all gz archives.")
+    print("-"*40)
+
 
 def underprint(msg):
     print()
@@ -95,6 +117,13 @@ if __name__ == "__main__":
         "--no_gunzip",
         action="store_true",
         help="""Gunzips the files after downloading. Defaults to false.""",
+    )
+
+    parser.add_argument(
+        "-r",
+        "--no_remove_gz",
+        action="store_true",
+        help="""Do not remove gzip files after gunzipping. Defaults to false.""",
     )
 
     args = parser.parse_args()
