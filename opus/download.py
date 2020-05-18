@@ -64,7 +64,7 @@ def main(args):
                     path_out = os.path.join(
                         args.download_dir, os.path.splitext(fname)[0]
                     )
-                    print(f"   gunzipping {path_out}")
+                    print(f"   gunzipping '{path_out}'")
                     with open(path_out, "wb") as o:
                         shutil.copyfileobj(i, o)
                 if not args.no_remove_gz:
