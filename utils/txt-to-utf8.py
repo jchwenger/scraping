@@ -15,7 +15,7 @@ parser.add_argument(
     help="Dir containing files. Files must end in '.txt' to be taken into account.",
 )
 
-def main(args)
+def main(args):
     detector = UniversalDetector()
     fnames = [x for x in os.listdir(args.dir) if '.txt' in x]
 
