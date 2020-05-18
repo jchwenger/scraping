@@ -59,19 +59,23 @@ def main(args):
         fnames = [f for f in os.listdir(args.download_dir) if '.gz' in f]
         for fname in fnames:
             path_in = os.path.join(args.download_dir, fname)
-            with gzip.GzipFile(path_in, "rb") as i:
-                path_out = os.path.join(
-                    args.download_dir, os.path.splitext(fname)[0]
-                )
-                print(f"   gunzipping {path_out}")
-                with open(path_out, "wb") as o:
-                    shutil.copyfileobj(i, o)
-            if not args.no_remove_gz:
-                print(f"   (removing '{path_in}')")
-                os.remove(path_in)
+            try:
+                with gzip.GzipFile(path_in, "rb") as i:
+                    path_out = os.path.join(
+                        args.download_dir, os.path.splitext(fname)[0]
+                    )
+                    print(f"   gunzipping {path_out}")
+                    with open(path_out, "wb") as o:
+                        shutil.copyfileobj(i, o)
+                if not args.no_remove_gz:
+                    print(f"   (removing '{path_in}')")
+                    os.remove(path_in)
+            except Exception as e:
+                print(f"failed gunzipping for {fname}")
+                print(e)
     if not args.no_gunzip and not args.no_remove_gz:
         print()
-        print("Done. Removed all gz archives.")
+        print("Done.")
     print("-"*40)
 
 
