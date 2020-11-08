@@ -68,7 +68,6 @@ def main():
                     le_w, le_rest = li.text.split(",", 1)
                 except:
                     le_w, le_rest = li.text.split(".", 1)
-                    # print("*****", li.text)
                 le_rest = le_rest.split("‖")
                 gram_def = defaultdict(list)
                 # gram_def["sanity"] = le_rest
@@ -82,23 +81,6 @@ def main():
                         gram_def[curr_gramm].append(chunk.strip())
                 le_w = init_star.sub("", le_w)
                 les_words[num_re.sub(r"\2", le_w)].append(gram_def)
-                # le_w = num_re.sub(r"\2, \1", le_w)
-                # print(le_w, "|", le_rest)
-                # le_w = li.find("b")
-                # print(num_re.sub(r"\2, \1", le_w.text))
-                # le_rest = le_w.next_sibling
-                # print(le_rest)
-                # le_rest = final_dot.sub("", init_space_comma.sub("", le_rest))
-                # for chunk in le_rest.split("‖"):
-                #     print(chunk)
-                    # if "," in chunk:
-                    #     chunk = chunk.split(",")
-                    #     print(f"({chunk[0]})")
-                    #     print("- ", chunk[1])
-                    # else:
-                    #     print("- ", chunk)
-            # time.sleep(.1)
-            # break
 
     # print("-" * 40)
     # pp.pprint(les_words.keys())
